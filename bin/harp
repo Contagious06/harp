@@ -3,7 +3,6 @@
 var nodePath      = require("path")
 var program       = require("commander")
 var fse           = require("fs-extra")
-var downloadRepo  = require("download-github-repo")
 var pkg           = require("../package.json")
 var helpers       = require("../lib/helpers")
 var harp          = require("../")
@@ -21,58 +20,6 @@ var output = function(msg){
 
 program
   .version(pkg.version)
-
-program
-  .command("init [path]")
-  .usage("initializes a new Harp project in the current directory.\n  See available boilerplates at https://github.com/harp-boilerplates")
-  .option("-b, --boilerplate <github-username/repo>", "use a github repo as a boilerplate", "harp-boilerplates/default")
-  .description("Initialize a new Harp project in current directory")
-  .action(function(path, program){
-    var projectPath     = nodePath.resolve(process.cwd(), path || "")
-    var boilerplatePath = nodePath.resolve(__dirname, "..", "lib", "default_boilerplate")
-    var repo            = program.boilerplate
-
-    // Assume `harp-boilerplates` github org if boilerplate doesn't contain a slash
-    repo.match(/\//) || (repo = "harp-boilerplates/"+repo)
-
-    var done = function() {
-      console.log("Initialized project at", projectPath)
-    }
-
-    fse.mkdirp(projectPath, function(err){
-      if(err) return err
-
-      fse.readdir(projectPath, function(err, contents){
-
-        if(err) return err
-
-        if(contents.length !== 0){
-          console.log("Sorry,", projectPath, "must be empty.")
-          return
-        }
-
-        console.log("Downloading boilerplate: https://github.com/"+repo)
-
-        //fse.writeFileSync("/Desktop/harp-test-output.txt", repo + "::" + projectPath)
-
-        downloadRepo(repo, projectPath, function(err) {
-          if (!err) return done()
-
-          if (require('util').isError(err) && err['code'] === 'ENOTFOUND') {
-            console.error("You're not connected to the Internet, so we'll use the default boilerplate.")
-            fse.copy(boilerplatePath, projectPath, function(err){
-              if (err) return err
-              return done()
-            })
-          } else {
-            return console.error("Template not found:", "https://github.com/"+repo)
-          }
-
-        })
-
-      })
-    })
-  })
 
 program
   .command("server [path]")
